@@ -5,16 +5,21 @@ using UnityEngine;
 
 namespace RollABall.Scripts
 {
-    public class PlayerController : MonoBehaviour
+    public class Player : MonoBehaviour
     {
         #region private fields
 
-        // fields
+        /// <summary>
+        /// Non-Serializable fields
+        /// </summary>
         private Rigidbody rigidbody;
 
-        //NOTE: ako ova promenljiva bude tipa IReadOnlyReactiveProperty<Vector2> onda jednostavno ne dobijamo nikakavo kretanje lopte ako su u jednom trenutku pririsnute dve strelice za kretanje
-        //NOTE: kretanje moze da se odvija samo u jednom pravcu
-        //NOTE: razlog za ovakvo ponasanje nepoznat
+        /// <summary>
+        /// Serializable fields
+        /// </summary>
+        [SerializeField] private float _speed;
+        [SerializeField] private float _jumpFactor;
+
         private IObservable<Vector2> Movement
         {
             get
@@ -23,8 +28,8 @@ namespace RollABall.Scripts
                     .DistinctUntilChanged()
                     .Select(_ =>
                     {
-                        var moveHorizontal = Input.GetAxis(HORIZONTAL_MOVE);
-                        var moveVertical = Input.GetAxis(VERTICAL_MOVE);
+                        var moveHorizontal = Input.GetAxis(Constants.Simulation.HORIZONTAL_MOVE);
+                        var moveVertical = Input.GetAxis(Constants.Simulation.VERTICAL_MOVE);
                         return new Vector2(moveHorizontal, moveVertical).normalized;
                     });
             }
@@ -40,22 +45,18 @@ namespace RollABall.Scripts
             }
         }
 
-        public IObservable<bool> IsPlayerDead
+        private IObservable<bool> IsPlayerDead
         {
             get
             {
                 return this.OnTriggerEnterAsObservable()
-                    .Select(otherCollider => otherCollider.CompareTag("Finish"));
+                    .Select(otherCollider =>
+                    {
+                        Debug.LogFormat($"{otherCollider.name}");
+                        return otherCollider.CompareTag(Constants.Tags.FINISH);
+                    });
             }
         }
-
-        // serialized
-        [SerializeField] private float _speed;
-        [SerializeField] private float _jumpFactor;
-
-        // consts
-        private const string HORIZONTAL_MOVE = "Horizontal";
-        private const string VERTICAL_MOVE = "Vertical";
 
         #endregion
 
